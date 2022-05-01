@@ -34,3 +34,13 @@ void NormVector::operator+=(NormVector vec)
     mNormX = dist > 0 ? dx / dist : 0;
     mNormY = dist > 0 ? dy / dist : 0;
 }
+
+void NormVector::reflectAbout(qreal rad)
+{
+    qreal otherX = qCos(rad);
+    qreal otherY = qSin(rad);
+    qreal dot = mNormX*otherX + mNormY*otherY;
+    mNormX = mNormX - 2.0*dot*otherX;
+    mNormY = mNormY - 2.0*dot*otherY;
+    mAtan2 = qAtan2(mNormY, mNormX);
+}

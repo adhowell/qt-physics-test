@@ -25,6 +25,12 @@ public:
     void operator+=(NormVector vec);
 
     /**
+     * Reflects the vector about a vector with the given radial.
+     * @param rad radial (radians) to flip about.
+     */
+    void reflectAbout(qreal rad);
+
+    /**
      * Return the radial (radians) of the normalised vector.
      */
     qreal atan2() const { return mAtan2; }
@@ -48,6 +54,7 @@ public:
 
     qreal getVel() const { return mVel; }
     void setVel(qreal vel) { mVel = vel > 0.1 ? vel : 0; }
+    void reflectAbout(qreal rad) { mVec.reflectAbout(rad); };
 
 private:
     NormVector mVec;

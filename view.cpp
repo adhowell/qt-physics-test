@@ -61,10 +61,7 @@ void GraphicsView::collisionCalc()
             qreal dist = Ball::sRadius - b->distance(w);
             if (dist >= 0) {
                 b->posUpdate(dist, w->getNormVec().atan2());
-
-                // Need to do this twice as the wall is fixed
-                b->vectorUpdate(w->getNormVec().atan2());
-                b->vectorUpdate(w->getNormVec().atan2());
+                b->vectorReflect(w->getNormVec().atan2());
             }
         }
     }
@@ -78,14 +75,13 @@ void GraphicsView::collisionCalc()
             qreal dist = Ball::sRadius*2.0 - bI->distance(bJ);
             if (dist >= 0) {
                 // Elastic collision, equal mass
-                qreal iVel = bI->getVel();
-                bI->velUpdate(bJ->getVel());
-                bJ->velUpdate(iVel);
+                bI->swapVel(bJ);
+                qreal atan2 = bI->atan2(bJ);
 
-                bI->posUpdate(dist*0.5, bI->atan2(bJ));
-                bJ->posUpdate(dist*0.5, bJ->atan2(bI));
-                bI->vectorUpdate(bI->atan2(bJ));
-                bJ->vectorUpdate(bJ->atan2(bI));
+                bI->posUpdate(dist*0.5 + 0.1, atan2);
+                bJ->posUpdate(dist*0.5 + 0.1, atan2+M_PI);
+                bI->vectorReflect(atan2);
+                bJ->vectorReflect(atan2+M_PI);
             }
         }
     }

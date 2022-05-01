@@ -22,6 +22,11 @@ void Ball::vectorUpdate(qreal rad)
     mV += rad;
 }
 
+void Ball::vectorReflect(qreal rad)
+{
+    mV.reflectAbout(rad);
+}
+
 void Ball::advance(qreal deltaT)
 {
     // Compute new position based on delta-t
@@ -89,3 +94,10 @@ qreal Ball::atan2(Ball* b) const
 {
     return qAtan2(mP.y()-b->mP.y(), mP.x()-b->mP.x());
 };
+
+void Ball::swapVel(Ball *b)
+{
+    qreal ownVel = mV.getVel();
+    mV.setVel(b->getVel());
+    b->mV.setVel(ownVel);
+}

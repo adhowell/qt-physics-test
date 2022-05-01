@@ -21,8 +21,8 @@ public:
 
     /**
      * Move the ball by the given radial and distance.
-     * @param dist radial (radians) to move along
-     * @param rad
+     * @param dist distance to move the ball by
+     * @param rad radial (radians) to move along
      */
     void posUpdate(qreal dist, qreal rad);
 
@@ -34,8 +34,23 @@ public:
     void vectorUpdate(qreal rad);
 
     /**
+     * Update the radial direction the ball is moving along
+     * by reflecting the current travel vector about a vector
+     * with the given radial.
+     * @param rad radial (radians) to flip about.
+     */
+    void vectorReflect(qreal rad);
+
+    /**
+     * Swap velocity with the given ball. Used in
+     * elastic equal-mass collisions.
+     * @param b The ball object to swap velocities with.
+     */
+    void swapVel(Ball* b);
+
+    /**
      * Set the velocity of the ball to the given value.
-     * @param newVel new velocity
+     * @param newVel new velocity.
      */
     void velUpdate(qreal newVel) { mV.setVel(newVel); }
 
