@@ -1,13 +1,17 @@
 #include "ball.h"
 
 int Ball::sRadius = 10;
+qreal Ball::sMinMass = 1.0;
+qreal Ball::sMaxMass = 10.0;
 
-Ball::Ball(QColor color, qreal x, qreal y, Vector v) : mColor(color), mP(QPointF(x, y)), mV(v)
+Ball::Ball(QColor color, qreal x, qreal y, Vector v, qreal mass)
+: mColor(color), mP(QPointF(x, y)), mV(v), mM(mass)
 {
     setPos(x-sRadius*0.5, y-sRadius*0.5);
 }
 
-Ball::Ball(QColor color, QPointF p, Vector v) : mColor(color), mP(p), mV(v)
+Ball::Ball(QColor color, QPointF p, Vector v, qreal mass)
+: mColor(color), mP(p), mV(v), mM(mass)
 {
     setPos(p.x()-sRadius*0.5, p.y()-sRadius*0.5);
 }
@@ -36,9 +40,19 @@ void Ball::paint(QPainter *painter, const QStyleOptionGraphicsItem *option, QWid
     Q_UNUSED(widget);
 
     QPen pen;
+    QBrush brush;
+    brush.setStyle(Qt::SolidPattern);
+
     pen.setColor(mColor);
-    painter->setPen(pen);
+    QColor brushColor;
+    brushColor.setRgb(mColor.rgb());
+    brushColor.setAlphaF((mM - sMinMass) / (sMaxMass - sMinMass));
+    brush.setColor(brushColor);
+
     painter->setRenderHint(QPainter::Antialiasing);
+    painter->setPen(pen);
+    painter->setBrush(brush);
+
     painter->drawEllipse(QRectF(-sRadius, -sRadius, sRadius*2.0, sRadius*2.0));
 }
 
@@ -95,8 +109,10 @@ void Ball::collide(Ball* b)
     Vector x2 = Vector(b->mP.x(), b->mP.y());
     Vector x12 = x1 - x2;
     Vector x21 = x2 - x1;
-    Vector thisNewVec = mV - x12 * ( ((mV - b->mV) * (x12)) / qPow(x12.getSize(), 2.0) );
-    Vector otherNewVec = b->mV - x21 * ( ((b->mV - mV) * (x21)) / qPow(x21.getSize(), 2.0) );
+    Vector thisNewVec = mV - x12 * ( ((mV - b->mV) * (x12)) / qPow(x12.getSize(), 2.0) )
+            * (2.0 * b->mM / (mM + b->mM));
+    Vector otherNewVec = b->mV - x21 * ( ((b->mV - mV) * (x21)) / qPow(x21.getSize(), 2.0) )
+            * (2.0 * mM / (mM + b->mM));
     mV = thisNewVec;
     b->mV = otherNewVec;
 }

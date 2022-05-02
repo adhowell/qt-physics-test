@@ -30,10 +30,11 @@ void GraphicsView::mouseReleaseEvent(QMouseEvent *event)
 {
     if (mLine->getVisibility()) {
         mLine->setVisibility(false);
+        qreal mass = mUniformRng(mRng) * (Ball::sMaxMass - Ball::sMinMass) + Ball::sMinMass;
         auto ball = new Ball(QColor(0, 0, 0),
                              mLine->getStartPos(),
-                             Vector(mLine->getLine(),
-                                            mLine->getLine().length()*0.01));
+                             Vector(mLine->getLine(), mLine->getLine().length()*0.01),
+                             mass);
         scene()->addItem(ball);
     }
 }

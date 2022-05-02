@@ -7,8 +7,8 @@
  */
 class Ball : public QGraphicsItem {
 public:
-    Ball(QColor color, qreal x, qreal y, Vector v);
-    Ball(QColor color, QPointF p, Vector v);
+    Ball(QColor color, qreal x, qreal y, Vector v, qreal mass);
+    Ball(QColor color, QPointF p, Vector v, qreal mass);
     enum { Type = 3 };
     int type() const override { return Type; }
 
@@ -71,9 +71,12 @@ public:
     qreal getVel() const { return mV.getSize(); }
 
     static int sRadius;
+    static qreal sMinMass;
+    static qreal sMaxMass;
 
 private:
     QColor mColor;
-    QPointF mP;
-    Vector mV;
+    QPointF mP; // Centre point
+    Vector mV;  // Velocity vector
+    qreal mM;   // Mass
 };
