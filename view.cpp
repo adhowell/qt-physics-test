@@ -56,6 +56,10 @@ void GraphicsView::timerEvent(QTimerEvent *event)
 
 void GraphicsView::collisionCalc()
 {
+    qreal dx = mGravityStrength * (mDeltaT / mSubSamples) * qCos(mGravityDirection);
+    qreal dy = mGravityStrength * (mDeltaT / mSubSamples) * qSin(mGravityDirection);
+    Vector gravityVector = Vector(dx, dy);
+
     QVector<Ball*> balls_lmao;
     QVector<Wall*> walls;
     const QList<QGraphicsItem*> items = scene()->items();
@@ -76,6 +80,8 @@ void GraphicsView::collisionCalc()
                 if (dist >= 0) {
                     b->posUpdate(dist + 0.1, w->getNormVec().atan2());
                     b->vectorReflect(w->getNormVec().atan2());
+
+                    if (mInelastic) b->inelasticPenalty();
                 }
             }
         }
@@ -92,12 +98,18 @@ void GraphicsView::collisionCalc()
                     bI->posUpdate(dist * 0.5 + 0.1, atan2);
                     bJ->posUpdate(dist * 0.5 + 0.1, atan2 + M_PI);
                     bI->collide(bJ);
+
+                    if (mInelastic) {
+                        bI->inelasticPenalty();
+                        bJ->inelasticPenalty();
+                    }
                 }
             }
         }
 
         // Update positions by sub time-step
         for (auto b: balls_lmao) {
+            b->addVector(gravityVector);
             b->advance(mDeltaT / mSubSamples);
         }
     }
@@ -117,9 +129,91 @@ View::View(QWidget* parent) : QFrame(parent)
     mGraphicsView = new GraphicsView(this);
     mGraphicsView->ensureVisible(QRectF(0, 0, 0, 0));
 
-    QGridLayout* topLayout = new QGridLayout;
-    topLayout->addWidget(mGraphicsView, 0, 0);
-    setLayout(topLayout);
+    mGravitySlider = new QSlider();
+    mGravitySlider->setMinimum(0);
+    mGravitySlider->setMaximum(1000);
+    mGravitySlider->setValue(0);
+    mGravitySlider->setOrientation(Qt::Vertical);
+
+    mGravityDial = new QDial();
+    mGravityDial->setWrapping(true);
+    //mGravityDial->setBaseSize(50, 50);
+
+    mDeleteAllButton = new QToolButton();
+    mDeleteAllButton->setText("Clear screen");
+    mDeleteAllButton->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Preferred);
+
+    mCollisionModeButton = new QToolButton();
+    mCollisionModeButton->setText("Inelastic physics");
+    mCollisionModeButton->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Preferred);
+    mCollisionModeButton->setCheckable(true);
+
+    QToolBar* toolbar = new QToolBar;
+    toolbar->addWidget(mCollisionModeButton);
+    toolbar->addWidget(mDeleteAllButton);
+    QWidget* spacer = new QWidget();
+    spacer->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Preferred);
+    toolbar->addWidget(spacer);
+    toolbar->addWidget(mGravitySlider);
+    toolbar->addWidget(mGravityDial);
+
+    QGridLayout* layout = new QGridLayout;
+    layout->addWidget(mGraphicsView, 0, 0);
+    layout->addWidget(toolbar, 1, 0);
+    setLayout(layout);
+
+    connect(mDeleteAllButton, &QToolButton::pressed,
+            mGraphicsView, &GraphicsView::clearItems);
+    connect(mGravityDial, &QDial::sliderMoved,
+            mGraphicsView, &GraphicsView::adjustGravityDirection);
+    connect(mGravityDial, &QDial::sliderPressed,
+            this, &View::setGravityDirection);
+    connect(mGravitySlider, &QSlider::sliderMoved,
+            mGraphicsView, &GraphicsView::adjustGravityStrength);
+    connect(mCollisionModeButton, &QToolButton::toggled,
+            mGraphicsView, &GraphicsView::toggleInelastic);
+}
+
+void View::setGravityDirection()
+{
+    mGraphicsView->adjustGravityDirection(mGravityDial->value());
+}
+
+void GraphicsView::clearItems()
+{
+    QVector<Ball*> balls;
+    QVector<Wall*> walls;
+    const QList<QGraphicsItem*> items = scene()->items();
+    for (QGraphicsItem *item : items) {
+        if (Ball *ball = qgraphicsitem_cast<Ball*>(item))
+            balls << ball;
+        if (Wall *wall = qgraphicsitem_cast<Wall*>(item)) {
+            if (wall->deletable()) walls << wall;
+        }
+    }
+    for (auto b : balls) {
+        scene()->removeItem(b);
+        delete b;
+    }
+    for (auto w : walls) {
+        scene()->removeItem(w);
+        delete w;
+    }
+}
+
+void GraphicsView::adjustGravityDirection(int d)
+{
+    mGravityDirection = 2.0 * M_PI * qreal(d)/100.0 + M_PI_2;
+}
+
+void GraphicsView::adjustGravityStrength(int d)
+{
+    mGravityStrength = mMaxGravityStrength * qreal(d)/1000.0;
+}
+
+void GraphicsView::toggleInelastic()
+{
+    mInelastic = !mInelastic;
 }
 
 QGraphicsView* View::getQGraphicsView() const

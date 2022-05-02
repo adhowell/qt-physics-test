@@ -116,3 +116,13 @@ void Ball::collide(Ball* b)
     mV = thisNewVec;
     b->mV = otherNewVec;
 }
+
+void Ball::addVector(Vector v)
+{
+    mV += v;
+}
+
+void Ball::inelasticPenalty()
+{
+    mV *= 0.8;
+}

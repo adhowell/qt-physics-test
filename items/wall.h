@@ -8,14 +8,16 @@
  */
 class Wall : public QGraphicsItem {
 public:
-    explicit Wall(const QColor &color, QLineF l);
-    explicit Wall(QLineF l);
+    explicit Wall(const QColor &color, QLineF l, bool canBeDeleted = true);
+    explicit Wall(QLineF l, bool canBeDeleted = true);
     enum { Type = 4 };
     int type() const override { return Type; }
 
     QRectF boundingRect() const override;
     void paint(QPainter *painter, const QStyleOptionGraphicsItem *item, QWidget *widget) override;
-    QLineF getLine() { return mLine; }
+
+    QLineF getLine() const { return mLine; }
+    bool deletable() const { return mDeletable; }
 
     /**
      * Returns the vector normal to the line, pointing
@@ -27,6 +29,7 @@ private:
     QColor mColor;
     QLineF mLine;
     NormVector mNormVector;
+    bool mDeletable;
 };
 
 

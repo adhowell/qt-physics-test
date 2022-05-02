@@ -1,7 +1,9 @@
 #include "items/line.h"
 #include <QFrame>
 #include <QGraphicsView>
+#include <QtWidgets>
 #include <random>
+#include "global_config.h"
 
 class View;
 
@@ -18,6 +20,12 @@ public:
     void addEnergyLabel();
     Line* getLine() { return mLine; }
 
+public slots:
+    void clearItems();
+    void adjustGravityDirection(int i);
+    void adjustGravityStrength(int i);
+    void toggleInelastic();
+
 signals:
     void singleClick(qreal x, qreal y);
 
@@ -26,18 +34,34 @@ private:
     Line* mLine;
     qreal mDeltaT = 1.0;
     qreal mSubSamples = 10;
+    qreal mGravityDirection = M_PI_2;
+    qreal mGravityStrength = 0.0;
+    qreal mMaxGravityStrength = gGravity;
     std::mt19937 mRng;
     std::uniform_real_distribution<double> mUniformRng;
     QGraphicsTextItem* mEnergyText;
+    bool mInelastic = false;
 };
 
 class View : public QFrame {
+Q_OBJECT
 public:
     explicit View(QWidget *parent = nullptr);
 
     QGraphicsView* getQGraphicsView() const;
     GraphicsView* getGraphicsView() const;
 
+public slots:
+    void setGravityDirection();
+
+signals:
+    void clearScreen();
+
 private:
-    GraphicsView *mGraphicsView;
+    GraphicsView* mGraphicsView;
+    QDial* mGravityDial;
+    QSlider* mGravitySlider;
+    QLabel* mGravityLabel;
+    QToolButton* mCollisionModeButton;
+    QToolButton* mDeleteAllButton;
 };

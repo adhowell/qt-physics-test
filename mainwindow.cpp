@@ -3,9 +3,8 @@
 #include "items/ball.h"
 #include "items/wall.h"
 #include "view.h"
-#include "global_config.h"
 #include <QGraphicsScene>
-#include <QHBoxLayout>
+#include <QVBoxLayout>
 #include <QSplitter>
 
 MainWindow::MainWindow(QWidget *parent) : QWidget(parent) {
@@ -18,18 +17,18 @@ MainWindow::MainWindow(QWidget *parent) : QWidget(parent) {
     connect(view->getGraphicsView(), &GraphicsView::singleClick,
             this, &MainWindow::createBox);
 
-    auto layout = new QHBoxLayout;
+    auto layout = new QVBoxLayout;
     layout->addWidget(view);
     setLayout(layout);
 
     setWindowTitle("Interactive collision detection thing");
-    setFixedSize(gWidth, gHeight);
+    setFixedSize(gWidth, gHeight+100);
 
     mScene->addItem(view->getGraphicsView()->getLine());
-    createWall(QLineF(QPointF(0, 0), QPointF(gWidth-100, 0)));
-    createWall(QLineF(QPointF(gWidth-100, 0), QPointF(gWidth-100, gHeight-100)));
-    createWall(QLineF(QPointF(gWidth-100, gHeight-100), QPointF(0, gHeight-100)));
-    createWall(QLineF(QPointF(0, gHeight-100), QPointF(0, 0)));
+    createWall(QLineF(QPointF(0, 0), QPointF(gWidth-100, 0)), false);
+    createWall(QLineF(QPointF(gWidth-100, 0), QPointF(gWidth-100, gHeight-100)), false);
+    createWall(QLineF(QPointF(gWidth-100, gHeight-100), QPointF(0, gHeight-100)), false);
+    createWall(QLineF(QPointF(0, gHeight-100), QPointF(0, 0)), false);
 
     view->getGraphicsView()->addEnergyLabel();
 
@@ -43,8 +42,8 @@ void MainWindow::createBox(qreal x, qreal y)
         mScene->addItem(w);
 }
 
-void MainWindow::createWall(QLineF l)
+void MainWindow::createWall(QLineF l, bool canBeDeleted)
 {
-    auto item = new Wall(QColor(0, 0, 0), l);
+    auto item = new Wall(QColor(0, 0, 0), l, canBeDeleted);
     mScene->addItem(item);
 }

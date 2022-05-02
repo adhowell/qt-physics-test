@@ -64,6 +64,19 @@ public:
      */
     qreal distance(Wall* w) const;
 
+    /**
+     * Adds the given velocity vector to the velocity
+     * vector of this ball.
+     * @param v vector to add
+     */
+    void addVector(Vector v);
+
+    /**
+     * Approximates an inelastic collision by reducing
+     * the vector of this ball by 20%.
+     */
+    void inelasticPenalty();
+
     void paint(QPainter *painter, const QStyleOptionGraphicsItem *option, QWidget *widget) override;
     QRectF boundingRect() const override;
     void update() { setPos(mP); }

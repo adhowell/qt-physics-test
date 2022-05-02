@@ -14,7 +14,7 @@ public:
 
 public slots:
     void createBox(qreal x, qreal y);
-    void createWall(QLineF l);
+    void createWall(QLineF l, bool canBeDeleted = true);
 
 private:
     QGraphicsScene* mScene;

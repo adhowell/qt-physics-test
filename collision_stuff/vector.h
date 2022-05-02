@@ -50,6 +50,12 @@ public:
     Vector operator-(Vector vec) const;
 
     /**
+     * Add the given vector to this vector.
+     * @param vec vector to add
+     */
+    Vector operator+=(Vector vec);
+
+    /**
      * Return the dot product of this vector and the
      * given vector.
      * @param vec vector to take dot product with
@@ -63,10 +69,21 @@ public:
     Vector operator*(qreal scalar) const;
 
     /**
+     * Applies the given scalar to this vector.
+     * @param scalar
+     */
+    void operator*=(qreal scalar);
+
+    /**
      * Reflects this vector about a vector with the given radial.
      * @param rad radial (radians) to flip about.
      */
     void reflectAbout(qreal rad);
+
+    /**
+     * Set all member values to zero;
+     */
+    void reset();
 
     qreal getSize() const { return mSize; }
 
