@@ -3,22 +3,46 @@
 #include <QPainter>
 #include <QDebug>
 #include <QGraphicsScene>
+#include <QtMath>
 
 void Line::paint(QPainter *painter, const QStyleOptionGraphicsItem *option, QWidget *widget)
 {
     Q_UNUSED(widget)
 
-    QPen pen;
+    QBrush brush;
+    brush.setStyle(Qt::SolidPattern);
 
     // Length-dependent colour
     QLineF l = QLineF(mP1, mP2);
     qreal normLen = qMin(l.length()/300.0, 1.0);
-    pen.setColor(QColor(int(255*normLen), 0, int(255*(1-normLen))));
+    brush.setColor(QColor(int(255*normLen), 0, int(255*(1-normLen))));
+
+    // Create an arrow based on length
+    QPolygonF linePoly;
+    qreal arrowTipLen = l.length() * 0.33;
+    qreal rads = qAtan2(mP2.y()-mP1.y(), mP2.x()-mP1.x());
+
+    qreal outer = 0.2*normLen;
+    qreal inner = 0.1*normLen;
+
+    linePoly << mP1;
+    linePoly << QPointF(mP1.x() + qCos(rads+outer) * arrowTipLen,
+                        mP1.y() + qSin(rads+outer) * arrowTipLen);
+    linePoly << QPointF(mP1.x() + qCos(rads+inner) * arrowTipLen,
+                        mP1.y() + qSin(rads+inner) * arrowTipLen);
+    linePoly << mP2;
+    linePoly << QPointF(mP1.x() + qCos(rads-inner) * arrowTipLen,
+                        mP1.y() + qSin(rads-inner) * arrowTipLen);
+    linePoly << QPointF(mP1.x() + qCos(rads-outer) * arrowTipLen,
+                        mP1.y() + qSin(rads-outer) * arrowTipLen);
+    linePoly << mP1;
 
     if (!mVisible) painter->setOpacity(0);
-    painter->setPen(pen);
+    else painter->setOpacity(0.5);
+
+    painter->setBrush(brush);
     painter->setRenderHint(QPainter::Antialiasing);
-    painter->drawLine(l);
+    painter->drawPolygon(linePoly, Qt::WindingFill);
 }
 
 QRectF Line::boundingRect() const
