@@ -9,26 +9,6 @@
 class NormVector {
 public:
     NormVector(qreal dx, qreal dy);
-    explicit NormVector(QLineF l);
-
-    /**
-     * Equivalent to adding another normalised vector
-     * of angle rad.
-     * @param rad radial (radians) of other normalised vector
-     */
-    void operator+=(qreal rad);
-
-    /**
-     * Vector addition.
-     * @param vec NormVector object to add
-     */
-    void operator+=(NormVector vec);
-
-    /**
-     * Reflects the vector about a vector with the given radial.
-     * @param rad radial (radians) to flip about.
-     */
-    void reflectAbout(qreal rad);
 
     /**
      * Return the radial (radians) of the normalised vector.
@@ -36,27 +16,63 @@ public:
     qreal atan2() const { return mAtan2; }
 
 private:
-    qreal mNormX;
-    qreal mNormY;
     qreal mAtan2;
 };
 
 /**
- * Contains a NormVector for direction and an associated velocity.
+ * Representation for handling vector addition & reflection
  */
-class VelocityVector {
+class Vector {
 public:
-    VelocityVector(QLineF l, qreal vel) : mVec(l), mVel(vel) {};
-    QPointF getPosDelta(qreal deltaT) { return QPointF(mVel * deltaT * qCos(mVec.atan2()),
-                                                       mVel * deltaT * qSin(mVec.atan2())); }
-    void operator+=(qreal rad) { mVec+=rad; }
-    void operator+=(NormVector vec) { mVec+=vec; }
+    /**
+     * Construct vector with a line representing direction only
+     * (i.e. normalised vector) and a velocity.
+     * @param l line representing direction of travel
+     * @param vel velocity
+     */
+    Vector(QLineF l, qreal vel);
 
-    qreal getVel() const { return mVel; }
-    void setVel(qreal vel) { mVel = vel > 0.1 ? vel : 0; }
-    void reflectAbout(qreal rad) { mVec.reflectAbout(rad); };
+    /**
+     * Construct vector with delta-x and delta-y.
+     * @param dx delta x
+     * @param dy delta y
+     */
+    Vector(qreal dx, qreal dy);
+
+    QPointF getPosDelta(qreal deltaT) { return QPointF(mSize * deltaT * qCos(mAtan2),
+                                                       mSize * deltaT * qSin(mAtan2)); }
+
+    /**
+     * Return a new vector created by subtracting the
+     * given vector from this vector.
+     * @param vec vector to subtract
+     */
+    Vector operator-(Vector vec) const;
+
+    /**
+     * Return the dot product of this vector and the
+     * given vector.
+     * @param vec vector to take dot product with
+     */
+    qreal operator*(Vector vec) const;
+
+    /**
+     * Return a vector with the given scalar product.
+     * @param scalar
+     */
+    Vector operator*(qreal scalar) const;
+
+    /**
+     * Reflects this vector about a vector with the given radial.
+     * @param rad radial (radians) to flip about.
+     */
+    void reflectAbout(qreal rad);
+
+    qreal getSize() const { return mSize; }
 
 private:
-    NormVector mVec;
-    qreal mVel;
+    qreal mX;
+    qreal mY;
+    qreal mAtan2;
+    qreal mSize;
 };

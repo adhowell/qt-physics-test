@@ -3,44 +3,45 @@
 NormVector::NormVector(qreal dx, qreal dy)
 {
     mAtan2 = qAtan2(dy, dx);
-    qreal dist = qSqrt(qPow(dx, 2.0) + qPow(dy, 2.0));
-    mNormX = dist > 0 ? dx / dist : 0;
-    mNormY = dist > 0 ? dy / dist : 0;
 }
 
-NormVector::NormVector(QLineF l)
+Vector::Vector(QLineF l, qreal vel)
 {
+    mSize = vel;
     mAtan2 = qAtan2(l.y2()-l.y1(), l.x2()-l.x1());
-    mNormX = l.length() > 0 ? (l.x2()-l.x1()) / l.length() : 0;
-    mNormY = l.length() > 0 ? (l.y2()-l.y1()) / l.length() : 0;
+    mX = qCos(mAtan2) * vel;
+    mY = qSin(mAtan2) * vel;
 }
 
-void NormVector::operator+=(qreal rad)
+Vector::Vector(qreal dx, qreal dy)
 {
-    qreal dx = qCos(rad) + mNormX;
-    qreal dy = qSin(rad) + mNormY;
+    mSize = qSqrt(qPow(dx, 2.0) + qPow(dy, 2.0));
     mAtan2 = qAtan2(dy, dx);
-    qreal dist = qSqrt(qPow(dx, 2.0) + qPow(dy, 2.0));
-    mNormX = dist > 0 ? dx / dist : 0;
-    mNormY = dist > 0 ? dy / dist : 0;
+    mX = dx;
+    mY = dy;
 }
 
-void NormVector::operator+=(NormVector vec)
-{
-    qreal dx = vec.mNormX + mNormX;
-    qreal dy = vec.mNormY + mNormY;
-    mAtan2 = qAtan2(dy, dx);
-    qreal dist = qSqrt(qPow(dx, 2.0) + qPow(dy, 2.0));
-    mNormX = dist > 0 ? dx / dist : 0;
-    mNormY = dist > 0 ? dy / dist : 0;
-}
-
-void NormVector::reflectAbout(qreal rad)
+void Vector::reflectAbout(qreal rad)
 {
     qreal otherX = qCos(rad);
     qreal otherY = qSin(rad);
-    qreal dot = mNormX*otherX + mNormY*otherY;
-    mNormX = mNormX - 2.0*dot*otherX;
-    mNormY = mNormY - 2.0*dot*otherY;
-    mAtan2 = qAtan2(mNormY, mNormX);
+    qreal dot = mX*otherX + mY*otherY;
+    mX -= 2.0*dot*otherX;
+    mY -= 2.0*dot*otherY;
+    mAtan2 = qAtan2(mY, mX);
+}
+
+Vector Vector::operator-(Vector vec) const
+{
+    return Vector(mX - vec.mX, mY - vec.mY);
+}
+
+qreal Vector::operator*(Vector vec) const
+{
+    return mX*vec.mX + mY*vec.mY;
+}
+
+Vector Vector::operator*(qreal scalar) const
+{
+    return Vector(mX*scalar, mY*scalar);
 }

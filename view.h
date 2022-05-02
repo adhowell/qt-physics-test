@@ -22,6 +22,8 @@ signals:
 private:
     View *mView;
     Line* mLine;
+    qreal mDeltaT = 1.0;
+    qreal mSubSamples = 10;
 };
 
 class View : public QFrame {

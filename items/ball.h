@@ -7,8 +7,8 @@
  */
 class Ball : public QGraphicsItem {
 public:
-    Ball(QColor color, qreal x, qreal y, VelocityVector v);
-    Ball(QColor color, QPointF p, VelocityVector v);
+    Ball(QColor color, qreal x, qreal y, Vector v);
+    Ball(QColor color, QPointF p, Vector v);
     enum { Type = 3 };
     int type() const override { return Type; }
 
@@ -28,13 +28,6 @@ public:
 
     /**
      * Update the radial direction the ball is moving along
-     * by vector addition of a vector with the given radial.
-     * @param rad radial (radians) to add to the direction vector.
-     */
-    void vectorUpdate(qreal rad);
-
-    /**
-     * Update the radial direction the ball is moving along
      * by reflecting the current travel vector about a vector
      * with the given radial.
      * @param rad radial (radians) to flip about.
@@ -42,31 +35,45 @@ public:
     void vectorReflect(qreal rad);
 
     /**
-     * Swap velocity with the given ball. Used in
-     * elastic equal-mass collisions.
-     * @param b The ball object to swap velocities with.
+     * Updates the velocity vector of this object and
+     * of the given other ball, based on an elastic
+     * collision.
+     * @param b Ball object this ball is colliding with
      */
-    void swapVel(Ball* b);
+    void collide(Ball* b);
 
     /**
-     * Set the velocity of the ball to the given value.
-     * @param newVel new velocity.
+     * Return the radial angle of the vector between the
+     * centre of this ball to the centre of the given
+     * ball (in that direction).
+     * @param b Other ball to calculate angle to
      */
-    void velUpdate(qreal newVel) { mV.setVel(newVel); }
+    qreal atan2(Ball* b) const;
+
+    /**
+     * Return the distance from the centre of this ball
+     * to the centre of the given ball.
+     * @param b Other ball to calculate distance to
+     */
+    qreal distance(Ball* b) const;
+
+    /**
+     * Return the distance from the centre of this ball
+     * to the closest point on the given wall.
+     * @param w Wall to calculate distance to
+     */
+    qreal distance(Wall* w) const;
 
     void paint(QPainter *painter, const QStyleOptionGraphicsItem *option, QWidget *widget) override;
     QRectF boundingRect() const override;
+    void update() { setPos(mP); }
 
-    qreal getVel() const { return mV.getVel(); }
-
-    qreal distance(Ball* b) const;
-    qreal distance(Wall* w) const;
-    qreal atan2(Ball* b) const;
+    qreal getVel() const { return mV.getSize(); }
 
     static int sRadius;
 
 private:
     QColor mColor;
     QPointF mP;
-    VelocityVector mV;
+    Vector mV;
 };

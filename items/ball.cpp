@@ -2,12 +2,12 @@
 
 int Ball::sRadius = 10;
 
-Ball::Ball(QColor color, qreal x, qreal y, VelocityVector v) : mColor(color), mP(QPointF(x, y)), mV(v)
+Ball::Ball(QColor color, qreal x, qreal y, Vector v) : mColor(color), mP(QPointF(x, y)), mV(v)
 {
     setPos(x-sRadius*0.5, y-sRadius*0.5);
 }
 
-Ball::Ball(QColor color, QPointF p, VelocityVector v) : mColor(color), mP(p), mV(v)
+Ball::Ball(QColor color, QPointF p, Vector v) : mColor(color), mP(p), mV(v)
 {
     setPos(p.x()-sRadius*0.5, p.y()-sRadius*0.5);
 }
@@ -15,11 +15,6 @@ Ball::Ball(QColor color, QPointF p, VelocityVector v) : mColor(color), mP(p), mV
 void Ball::posUpdate(qreal dist, qreal rad)
 {
     mP += QPointF(dist * qCos(rad), dist * qSin(rad));
-}
-
-void Ball::vectorUpdate(qreal rad)
-{
-    mV += rad;
 }
 
 void Ball::vectorReflect(qreal rad)
@@ -30,11 +25,10 @@ void Ball::vectorReflect(qreal rad)
 void Ball::advance(qreal deltaT)
 {
     // Compute new position based on delta-t
-    if (mV.getVel() > 0) {
+    if (mV.getSize() > 0) {
         //mV.velocityDragAdjust();
         mP += mV.getPosDelta(deltaT);
     }
-    setPos(mP);
 }
 
 void Ball::paint(QPainter *painter, const QStyleOptionGraphicsItem *option, QWidget *widget) {
@@ -63,10 +57,10 @@ qreal Ball::distance(Wall* w) const
 {
     QLineF l = w->getLine();
 
-    // Easy outcome: line endpoint inside circle
-    qreal endDist = qSqrt(qPow(mP.x()-l.x1(), 2.0) + qPow(mP.y()-l.y1(), 2.0));
-    if (endDist <= sRadius) return endDist;
-    endDist = qSqrt(qPow(mP.x()-l.x1(), 2.0) + qPow(mP.y()-l.y1(), 2.0));
+    // Check if line endpoint inside circle
+    qreal startDist = qSqrt(qPow(mP.x()-l.x1(), 2.0) + qPow(mP.y()-l.y1(), 2.0));
+    if (startDist <= sRadius) return startDist;
+    qreal endDist = qSqrt(qPow(mP.x()-l.x2(), 2.0) + qPow(mP.y()-l.y2(), 2.0));
     if (endDist <= sRadius) return endDist;
 
     // Get dot product of the line and circle
@@ -76,13 +70,13 @@ qreal Ball::distance(Wall* w) const
     qreal closestX = l.x1() + (dot * (l.x2()-l.x1()));
     qreal closestY = l.y1() + (dot * (l.y2()-l.y1()));
 
-    // Get distance from the point to the two ends of the line
+    // Get distance from the closest point to the two ends of the line
     qreal d1 = qSqrt(qPow(closestX-l.x1(), 2.0) + qPow(closestY-l.y1(), 2.0));
     qreal d2 = qSqrt(qPow(closestX-l.x2(), 2.0) + qPow(closestY-l.y2(), 2.0));
 
-    // Return a distance greater than the radius if closest point isn't on the line
+    // Return the distance to the nearest end-point if the closest point isn't on the line
     if (d1+d2 < l.length() || d1+d2 > l.length())
-        return sRadius*2;
+        return qMin(startDist, endDist);
 
     // Get distance to closest point
     qreal distX = closestX - mP.x();
@@ -95,9 +89,14 @@ qreal Ball::atan2(Ball* b) const
     return qAtan2(mP.y()-b->mP.y(), mP.x()-b->mP.x());
 };
 
-void Ball::swapVel(Ball *b)
+void Ball::collide(Ball* b)
 {
-    qreal ownVel = mV.getVel();
-    mV.setVel(b->getVel());
-    b->mV.setVel(ownVel);
+    Vector x1 = Vector(mP.x(), mP.y());
+    Vector x2 = Vector(b->mP.x(), b->mP.y());
+    Vector x12 = x1 - x2;
+    Vector x21 = x2 - x1;
+    Vector thisNewVec = mV - x12 * ( ((mV - b->mV) * (x12)) / qPow(x12.getSize(), 2.0) );
+    Vector otherNewVec = b->mV - x21 * ( ((b->mV - mV) * (x21)) / qPow(x21.getSize(), 2.0) );
+    mV = thisNewVec;
+    b->mV = otherNewVec;
 }

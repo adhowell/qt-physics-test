@@ -7,6 +7,7 @@
 #include <QFrame>
 #include <QDebug>
 
+
 void GraphicsView::mousePressEvent(QMouseEvent* event)
 {
     QPointF eventPos = mapToScene(event->x(), event->y());
@@ -31,7 +32,7 @@ void GraphicsView::mouseReleaseEvent(QMouseEvent *event)
         mLine->setVisibility(false);
         auto ball = new Ball(QColor(0, 0, 0),
                              mLine->getStartPos(),
-                             VelocityVector(mLine->getLine(),
+                             Vector(mLine->getLine(),
                                             mLine->getLine().length()*0.01));
         scene()->addItem(ball);
     }
@@ -55,40 +56,44 @@ void GraphicsView::collisionCalc()
             walls << wall;
     }
 
-    // Check for balls going to the wall(s)
-    for (auto b : balls_lmao) {
-        for (auto w : walls) {
-            qreal dist = Ball::sRadius - b->distance(w);
-            if (dist >= 0) {
-                b->posUpdate(dist, w->getNormVec().atan2());
-                b->vectorReflect(w->getNormVec().atan2());
+    // Sub-sample the current frame
+    for (int s = 0; s <= mSubSamples; s++)
+    {
+        // Check for balls going to the wall(s)
+        for (auto b: balls_lmao) {
+            for (auto w: walls) {
+                qreal dist = Ball::sRadius - b->distance(w);
+                if (dist >= 0) {
+                    b->posUpdate(dist + 0.1, w->getNormVec().atan2());
+                    b->vectorReflect(w->getNormVec().atan2());
+                }
             }
         }
-    }
 
-    // Then check for collision with other balls
-    int numBalls = balls_lmao.size();
-    for (int i; i < numBalls; i++) {
-        auto bI = balls_lmao[i];
-        for (int j = i+1; j < numBalls; j++) {
-            auto bJ = balls_lmao[j];
-            qreal dist = Ball::sRadius*2.0 - bI->distance(bJ);
-            if (dist >= 0) {
-                // Elastic collision, equal mass
-                bI->swapVel(bJ);
-                qreal atan2 = bI->atan2(bJ);
-
-                bI->posUpdate(dist*0.5 + 0.1, atan2);
-                bJ->posUpdate(dist*0.5 + 0.1, atan2+M_PI);
-                bI->vectorReflect(atan2);
-                bJ->vectorReflect(atan2+M_PI);
+        // Then check for collision with other balls
+        int numBalls = balls_lmao.size();
+        for (int i; i < numBalls; i++) {
+            auto bI = balls_lmao[i];
+            for (int j = i + 1; j < numBalls; j++) {
+                auto bJ = balls_lmao[j];
+                qreal dist = Ball::sRadius * 2.0 - bI->distance(bJ);
+                if (dist >= 0) {
+                    qreal atan2 = bI->atan2(bJ);
+                    bI->posUpdate(dist * 0.5 + 0.1, atan2);
+                    bJ->posUpdate(dist * 0.5 + 0.1, atan2 + M_PI);
+                    bI->collide(bJ);
+                }
             }
         }
-    }
 
-    // Update positions by time-step
-    for (auto b : balls_lmao) {
-        b->advance(1);
+        // Update positions by sub time-step
+        for (auto b: balls_lmao) {
+            b->advance(mDeltaT / mSubSamples);
+        }
+    }
+    // Draw calls
+    for (auto b: balls_lmao) {
+        b->update();
     }
 }
 
