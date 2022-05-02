@@ -31,6 +31,13 @@ void Vector::reflectAbout(qreal rad)
     mAtan2 = qAtan2(mY, mX);
 }
 
+void Vector::setSize(qreal scalar)
+{
+    mSize = scalar;
+    mX = qCos(mAtan2) * mSize;
+    mY = qSin(mAtan2) * mSize;
+}
+
 void Vector::reset()
 {
     mX = 0.0;
@@ -45,6 +52,13 @@ Vector Vector::operator+=(Vector vec)
     mY += vec.mY;
     mAtan2 = qAtan2(mY, mX);
     mSize = qSqrt(qPow(mX, 2.0) + qPow(mY, 2.0));
+}
+
+void Vector::operator+=(qreal scalar)
+{
+    mSize += scalar;
+    mX = qCos(mAtan2) * mSize;
+    mY = qSin(mAtan2) * mSize;
 }
 
 Vector Vector::operator-(Vector vec) const

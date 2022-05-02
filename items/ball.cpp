@@ -29,6 +29,7 @@ void Ball::vectorReflect(qreal rad)
 void Ball::advance(qreal deltaT)
 {
     // Compute new position based on delta-t
+    if (mV.getSize() > 50.0) mV.setSize(50.0);
     if (mV.getSize() > 0) {
         //mV.velocityDragAdjust();
         mP += mV.getPosDelta(deltaT);
@@ -122,7 +123,12 @@ void Ball::addVector(Vector v)
     mV += v;
 }
 
-void Ball::inelasticPenalty()
+void Ball::velocityMultiply(qreal scalar)
 {
-    mV *= 0.8;
+    mV *= scalar;
+}
+
+void Ball::velocityAddition(qreal scalar)
+{
+    mV += scalar;
 }

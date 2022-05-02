@@ -1,17 +1,12 @@
 #include "wall.h"
 #include <QPainter>
 
-Wall::Wall(const QColor &color, QLineF l, bool canBeDeleted) : mNormVector(-l.dy(), l.dx())
-{
-    mColor = color;
-    mLine = l;
-    mDeletable = canBeDeleted;
-}
-
-Wall::Wall(QLineF l, bool canBeDeleted) : mColor(QColor(0, 0, 0)), mNormVector(-l.dy(), l.dx())
+Wall::Wall(QLineF l, qreal* temp, bool canBeDeleted)
+: mNormVector(-l.dy(), l.dx())
 {
     mLine = l;
     mDeletable = canBeDeleted;
+    mTemp = temp;
 }
 
 QRectF Wall::boundingRect() const {
@@ -26,7 +21,7 @@ void Wall::paint(QPainter *painter, const QStyleOptionGraphicsItem *option, QWid
     Q_UNUSED(widget);
 
     QPen pen;
-    pen.setColor(mColor);
+    pen.setColor(QColor(int(*mTemp*255), 0, 0));
     painter->setPen(pen);
     painter->drawLine(mLine);
 }

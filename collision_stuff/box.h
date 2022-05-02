@@ -6,7 +6,7 @@
  */
 class Box {
 public:
-    Box(qreal x, qreal y);
+    Box(qreal x, qreal y, qreal* temp);
     QVector<Wall*> getWalls() { return mWalls; }
 
     static int sWidth;

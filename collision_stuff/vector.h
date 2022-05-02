@@ -45,20 +45,27 @@ public:
     /**
      * Return a new vector created by subtracting the
      * given vector from this vector.
-     * @param vec vector to subtract
+     * @param vec
      */
     Vector operator-(Vector vec) const;
 
     /**
      * Add the given vector to this vector.
-     * @param vec vector to add
+     * @param vec
      */
     Vector operator+=(Vector vec);
 
     /**
+     * Increases the magnitude (NOT the component
+     * directions) of this vector by the given scalar.
+     * @param scalar
+     */
+    void operator+=(qreal scalar);
+
+    /**
      * Return the dot product of this vector and the
      * given vector.
-     * @param vec vector to take dot product with
+     * @param vec
      */
     qreal operator*(Vector vec) const;
 
@@ -69,7 +76,7 @@ public:
     Vector operator*(qreal scalar) const;
 
     /**
-     * Applies the given scalar to this vector.
+     * Multiply this vector by the given scalar.
      * @param scalar
      */
     void operator*=(qreal scalar);
@@ -84,6 +91,12 @@ public:
      * Set all member values to zero;
      */
     void reset();
+
+    /**
+     * Sets the magnitude of the vector to the given scalar value.
+     * @param scalar
+     */
+    void setSize(qreal scalar);
 
     qreal getSize() const { return mSize; }
 

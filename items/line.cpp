@@ -14,7 +14,7 @@ void Line::paint(QPainter *painter, const QStyleOptionGraphicsItem *option, QWid
 
     // Length-dependent colour
     QLineF l = QLineF(mP1, mP2);
-    qreal normLen = qMin(l.length()/300.0, 1.0);
+    qreal normLen = qMin(l.length()/600.0, 1.0);
     brush.setColor(QColor(int(255*normLen), 0, int(255*(1-normLen))));
 
     // Create an arrow based on length

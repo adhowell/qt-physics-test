@@ -2,6 +2,7 @@
 #include <QWidget>
 #include <QGraphicsScene>
 #include <QSplitter>
+#include "view.h"
 
 /**
  * Handles the creation of the graphics view and scene, and
@@ -18,5 +19,6 @@ public slots:
 
 private:
     QGraphicsScene* mScene;
+    View* mView;
 };
 

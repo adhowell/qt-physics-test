@@ -1,5 +1,7 @@
 #include <QGraphicsItem>
 
+#pragma once
+
 /**
  * Line for drawing the velocity vector when creating a new ball
  */

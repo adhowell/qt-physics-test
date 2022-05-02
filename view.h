@@ -5,6 +5,8 @@
 #include <random>
 #include "global_config.h"
 
+#pragma once
+
 class View;
 
 class GraphicsView : public QGraphicsView {
@@ -19,11 +21,15 @@ public:
     void collisionCalc();
     void addEnergyLabel();
     Line* getLine() { return mLine; }
+    qreal* getTemp() { return &mTemp; }
+
+    static qreal sMaxTemp;
 
 public slots:
     void clearItems();
     void adjustGravityDirection(int i);
     void adjustGravityStrength(int i);
+    void adjustTemperature(int i);
     void toggleInelastic();
 
 signals:
@@ -32,6 +38,7 @@ signals:
 private:
     View *mView;
     Line* mLine;
+    qreal mTemp = 0.0;
     qreal mDeltaT = 1.0;
     qreal mSubSamples = 10;
     qreal mGravityDirection = M_PI_2;
@@ -61,7 +68,7 @@ private:
     GraphicsView* mGraphicsView;
     QDial* mGravityDial;
     QSlider* mGravitySlider;
-    QLabel* mGravityLabel;
+    QSlider* mTempSlider;
     QToolButton* mCollisionModeButton;
     QToolButton* mDeleteAllButton;
 };

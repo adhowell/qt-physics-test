@@ -7,13 +7,15 @@
 #include <QFrame>
 #include <QDebug>
 
+qreal GraphicsView::sMaxTemp = 1.0;
+
 GraphicsView::GraphicsView(View *v) : QGraphicsView(), mView(v), mUniformRng(0, 1) {
     mLine = new Line();
 }
 
 void GraphicsView::addEnergyLabel()
 {
-    mEnergyText = scene()->addText("TEST");
+    mEnergyText = scene()->addText("");
     mEnergyText->setPos(-3, -20);
 }
 
@@ -66,8 +68,10 @@ void GraphicsView::collisionCalc()
     for (QGraphicsItem *item : items) {
         if (Ball *ball = qgraphicsitem_cast<Ball*>(item))
             balls_lmao << ball;
-        if (Wall *wall = qgraphicsitem_cast<Wall*>(item))
+        if (Wall *wall = qgraphicsitem_cast<Wall*>(item)) {
+            wall->update(); // Update wall colour
             walls << wall;
+        }
     }
 
     // Sub-sample the current frame
@@ -81,7 +85,9 @@ void GraphicsView::collisionCalc()
                     b->posUpdate(dist + 0.1, w->getNormVec().atan2());
                     b->vectorReflect(w->getNormVec().atan2());
 
-                    if (mInelastic) b->inelasticPenalty();
+                    // Approximate inelastic collision
+                    if (mInelastic) b->velocityMultiply(0.9);
+                    b->velocityAddition(mTemp*sMaxTemp);
                 }
             }
         }
@@ -99,9 +105,10 @@ void GraphicsView::collisionCalc()
                     bJ->posUpdate(dist * 0.5 + 0.1, atan2 + M_PI);
                     bI->collide(bJ);
 
+                    // Approximate inelastic collision
                     if (mInelastic) {
-                        bI->inelasticPenalty();
-                        bJ->inelasticPenalty();
+                        bI->velocityMultiply(0.9);
+                        bJ->velocityMultiply(0.9);
                     }
                 }
             }
@@ -129,15 +136,23 @@ View::View(QWidget* parent) : QFrame(parent)
     mGraphicsView = new GraphicsView(this);
     mGraphicsView->ensureVisible(QRectF(0, 0, 0, 0));
 
+    mTempSlider = new QSlider();
+    mTempSlider->setMinimum(0);
+    mTempSlider->setMaximum(1000);
+    mTempSlider->setValue(0);
+    mTempSlider->setOrientation(Qt::Vertical);
+    mTempSlider->setToolTip("Wall temperature");
+
     mGravitySlider = new QSlider();
     mGravitySlider->setMinimum(0);
     mGravitySlider->setMaximum(1000);
     mGravitySlider->setValue(0);
     mGravitySlider->setOrientation(Qt::Vertical);
+    mGravitySlider->setToolTip("Gravity strength");
 
     mGravityDial = new QDial();
     mGravityDial->setWrapping(true);
-    //mGravityDial->setBaseSize(50, 50);
+    mGravityDial->setToolTip("Gravity direction");
 
     mDeleteAllButton = new QToolButton();
     mDeleteAllButton->setText("Clear screen");
@@ -151,10 +166,22 @@ View::View(QWidget* parent) : QFrame(parent)
     QToolBar* toolbar = new QToolBar;
     toolbar->addWidget(mCollisionModeButton);
     toolbar->addWidget(mDeleteAllButton);
+
     QWidget* spacer = new QWidget();
     spacer->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Preferred);
     toolbar->addWidget(spacer);
+
+    toolbar->addSeparator();
+    toolbar->addWidget(mTempSlider);
+    toolbar->addSeparator();
+
+    spacer = new QWidget();
+    spacer->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Preferred);
+    toolbar->addWidget(spacer);
+
+    toolbar->addSeparator();
     toolbar->addWidget(mGravitySlider);
+    toolbar->addSeparator();
     toolbar->addWidget(mGravityDial);
 
     QGridLayout* layout = new QGridLayout;
@@ -170,6 +197,8 @@ View::View(QWidget* parent) : QFrame(parent)
             this, &View::setGravityDirection);
     connect(mGravitySlider, &QSlider::sliderMoved,
             mGraphicsView, &GraphicsView::adjustGravityStrength);
+    connect(mTempSlider, &QSlider::sliderMoved,
+            mGraphicsView, &GraphicsView::adjustTemperature);
     connect(mCollisionModeButton, &QToolButton::toggled,
             mGraphicsView, &GraphicsView::toggleInelastic);
 }
@@ -209,6 +238,11 @@ void GraphicsView::adjustGravityDirection(int d)
 void GraphicsView::adjustGravityStrength(int d)
 {
     mGravityStrength = mMaxGravityStrength * qreal(d)/1000.0;
+}
+
+void GraphicsView::adjustTemperature(int d)
+{
+    mTemp = qreal(d)/1000.0;
 }
 
 void GraphicsView::toggleInelastic()

@@ -72,10 +72,18 @@ public:
     void addVector(Vector v);
 
     /**
-     * Approximates an inelastic collision by reducing
-     * the vector of this ball by 20%.
+     * Multiplies the velocity of this ball by
+     * the given scalar.
+     * @param scalar
      */
-    void inelasticPenalty();
+    void velocityMultiply(qreal scalar);
+
+    /**
+     * Adds the given scalar to the velocity
+     * of this ball.
+     * @param scalar
+     */
+    void velocityAddition(qreal scalar);
 
     void paint(QPainter *painter, const QStyleOptionGraphicsItem *option, QWidget *widget) override;
     QRectF boundingRect() const override;
