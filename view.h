@@ -8,13 +8,14 @@ class View;
 class GraphicsView : public QGraphicsView {
 Q_OBJECT
 public:
-    GraphicsView(View *v) : QGraphicsView(), mView(v), mUniformRng(0, 1) { mLine = new Line(); }
+    GraphicsView(View *v);
     void mousePressEvent(QMouseEvent *event) override;
     void mouseMoveEvent(QMouseEvent *event) override;
     void mouseReleaseEvent(QMouseEvent *event) override;
     void timerEvent(QTimerEvent* event) override;
 
     void collisionCalc();
+    void addEnergyLabel();
     Line* getLine() { return mLine; }
 
 signals:
@@ -27,6 +28,7 @@ private:
     qreal mSubSamples = 10;
     std::mt19937 mRng;
     std::uniform_real_distribution<double> mUniformRng;
+    QGraphicsTextItem* mEnergyText;
 };
 
 class View : public QFrame {

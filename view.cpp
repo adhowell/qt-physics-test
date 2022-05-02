@@ -7,6 +7,15 @@
 #include <QFrame>
 #include <QDebug>
 
+GraphicsView::GraphicsView(View *v) : QGraphicsView(), mView(v), mUniformRng(0, 1) {
+    mLine = new Line();
+}
+
+void GraphicsView::addEnergyLabel()
+{
+    mEnergyText = scene()->addText("TEST");
+    mEnergyText->setPos(-3, -20);
+}
 
 void GraphicsView::mousePressEvent(QMouseEvent* event)
 {
@@ -92,10 +101,14 @@ void GraphicsView::collisionCalc()
             b->advance(mDeltaT / mSubSamples);
         }
     }
-    // Draw calls
+    // Draw calls and get the current energy total
+    qreal energy = 0;
     for (auto b: balls_lmao) {
         b->update();
+        energy += b->getEnergy();
     }
+    energy /= 1000.0;
+    mEnergyText->setPlainText(QString("%1 kJ").arg(energy, 0, 'f', 5));
 }
 
 View::View(QWidget* parent) : QFrame(parent)

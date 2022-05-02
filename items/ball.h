@@ -69,6 +69,7 @@ public:
     void update() { setPos(mP); }
 
     qreal getVel() const { return mV.getSize(); }
+    qreal getEnergy() const { return 0.5*mM*qPow(mV.getSize(), 2.0); }
 
     static int sRadius;
     static qreal sMinMass;

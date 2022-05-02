@@ -31,6 +31,8 @@ MainWindow::MainWindow(QWidget *parent) : QWidget(parent) {
     createWall(QLineF(QPointF(gWidth-100, gHeight-100), QPointF(0, gHeight-100)));
     createWall(QLineF(QPointF(0, gHeight-100), QPointF(0, 0)));
 
+    view->getGraphicsView()->addEnergyLabel();
+
     view->getGraphicsView()->startTimer(1000/60);
 };
 
