@@ -12,7 +12,7 @@ find_package(Qt5Core REQUIRED)
 find_package(Qt5Widgets REQUIRED)
 find_package(Qt5Quick REQUIRED)
 
-add_executable(qt_projectile_test main.cpp mainwindow.cpp mainwindow.h view.cpp view.h collision_stuff/vector.h items/ball.cpp items/ball.h items/line.cpp items/line.h items/wall.cpp items/wall.h collision_stuff/vector.cpp collision_stuff/box.cpp collision_stuff/box.h global_config.h)
+add_executable(qt_projectile_test main.cpp mainwindow.cpp mainwindow.h view.cpp view.h collision_stuff/vector.h items/ball.cpp items/ball.h items/line.cpp items/line.h items/wall.cpp items/wall.h collision_stuff/vector.cpp collision_stuff/box.cpp collision_stuff/box.h global_config.h effects/blur.cpp effects/blur.h)
 
 target_link_libraries(qt_projectile_test Qt5::Core)
 target_link_libraries(qt_projectile_test Qt5::Widgets)

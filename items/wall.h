@@ -1,4 +1,5 @@
 #include "../collision_stuff/vector.h"
+#include "../effects/blur.h"
 #include <QGraphicsItem>
 
 #pragma once
@@ -30,6 +31,7 @@ private:
     NormVector mNormVector;
     bool mDeletable;
     qreal* mTemp;
+    Blur* mBlurEffect;
 };
 
 

@@ -7,6 +7,7 @@ Wall::Wall(QLineF l, qreal* temp, bool canBeDeleted)
     mLine = l;
     mDeletable = canBeDeleted;
     mTemp = temp;
+    mBlurEffect = new Blur(this);
 }
 
 QRectF Wall::boundingRect() const {
@@ -23,5 +24,8 @@ void Wall::paint(QPainter *painter, const QStyleOptionGraphicsItem *option, QWid
     QPen pen;
     pen.setColor(QColor(int(*mTemp*255), 0, 0));
     painter->setPen(pen);
+    mBlurEffect->setRadius(*mTemp+0.5);
+    mBlurEffect->adjustForItem();
+    setGraphicsEffect(mBlurEffect);
     painter->drawLine(mLine);
 }
