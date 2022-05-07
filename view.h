@@ -18,7 +18,8 @@ public:
     void mouseReleaseEvent(QMouseEvent *event) override;
     void timerEvent(QTimerEvent* event) override;
 
-    void collisionCalc();
+    void fastPhysicsCalc();
+    void accuratePhysicsCalc();
     void addEnergyLabel();
     Line* getLine() { return mLine; }
     qreal* getTemp() { return &mTemp; }
@@ -31,6 +32,7 @@ public slots:
     void adjustGravityStrength(int i);
     void adjustTemperature(int i);
     void toggleInelastic();
+    void toggleAccuracy();
 
 signals:
     void singleClick(qreal x, qreal y);
@@ -40,7 +42,8 @@ private:
     Line* mLine;
     qreal mTemp = 0.0;
     qreal mDeltaT = 1.0;
-    qreal mSubSamples = 10;
+    qreal mSubSamples = 3;
+    qreal mCollisionTreeLimit = 5;
     qreal mGravityDirection = M_PI_2;
     qreal mGravityStrength = 0.0;
     qreal mMaxGravityStrength = gGravity;
@@ -48,6 +51,7 @@ private:
     std::uniform_real_distribution<double> mUniformRng;
     QGraphicsTextItem* mEnergyText;
     bool mInelastic = false;
+    bool mAccuracy = false;
 };
 
 class View : public QFrame {
@@ -70,5 +74,6 @@ private:
     QSlider* mGravitySlider;
     QSlider* mTempSlider;
     QToolButton* mCollisionModeButton;
+    QToolButton* mAccuracyButton;
     QToolButton* mDeleteAllButton;
 };

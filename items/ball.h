@@ -7,8 +7,8 @@
  */
 class Ball : public QGraphicsItem {
 public:
-    Ball(QColor color, qreal x, qreal y, Vector v, qreal mass);
-    Ball(QColor color, QPointF p, Vector v, qreal mass);
+    Ball(QColor color, qreal x, qreal y, Vector v, qreal mass, qreal radius);
+    Ball(QColor color, QPointF p, Vector v, qreal mass, qreal radius);
     enum { Type = 3 };
     int type() const override { return Type; }
 
@@ -69,7 +69,21 @@ public:
      * vector of this ball.
      * @param v vector to add
      */
-    void addVector(Vector v);
+    void addVelocityVector(Vector v);
+
+    /**
+     * Adds the given acceleration vector to the
+     * acceleration vector of this ball.
+     * @param v vector to add
+     */
+    void addAccelerationVector(Vector a);
+
+    /**
+     * Sets the given acceleration vector as the
+     * acceleration vector of this ball.
+     * @param v vector to add
+     */
+    void setAccelerationVector(Vector a);
 
     /**
      * Multiplies the velocity of this ball by
@@ -85,20 +99,34 @@ public:
      */
     void velocityAddition(qreal scalar);
 
+    void storePosition() { mOldP = mP; }
+
+    void setTimeRemaining(qreal t) { mTimeRemaining = t; }
+
+    void decrementTime(qreal deltaT) { mTimeRemaining -= deltaT; }
+
     void paint(QPainter *painter, const QStyleOptionGraphicsItem *option, QWidget *widget) override;
     QRectF boundingRect() const override;
     void update() { setPos(mP); }
 
-    qreal getVel() const { return mV.getSize(); }
+    qreal getRadius() const { return mR; }
+    qreal getDeltaPos() const { return qSqrt(qPow(mP.x()-mOldP.x(), 2.0) + qPow(mP.y()-mOldP.y(), 2.0)); }
     qreal getEnergy() const { return 0.5*mM*qPow(mV.getSize(), 2.0); }
+    qreal getTimeRemaining() { return mTimeRemaining; }
+    qreal getVelocity() { return mV.getSize(); }
 
-    static int sRadius;
     static qreal sMinMass;
     static qreal sMaxMass;
+    static qreal sMinRadius;
+    static qreal sMaxRadius;
 
 private:
     QColor mColor;
     QPointF mP; // Centre point
     Vector mV;  // Velocity vector
+    Vector mA;  // Acceleration vector
     qreal mM;   // Mass
+    qreal mR;   // Radius
+    QPointF mOldP;  // Position at start of sub-epoch
+    qreal mTimeRemaining; // For current sub-epoch
 };

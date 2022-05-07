@@ -1,19 +1,20 @@
 #include "ball.h"
 
-int Ball::sRadius = 10;
+qreal Ball::sMinRadius = 5.0;
+qreal Ball::sMaxRadius = 15.0;
 qreal Ball::sMinMass = 1.0;
 qreal Ball::sMaxMass = 10.0;
 
-Ball::Ball(QColor color, qreal x, qreal y, Vector v, qreal mass)
-: mColor(color), mP(QPointF(x, y)), mV(v), mM(mass)
+Ball::Ball(QColor color, qreal x, qreal y, Vector v, qreal mass, qreal radius)
+: mColor(color), mP(QPointF(x, y)), mV(v), mM(mass), mR(radius), mA(Vector(0, 0))
 {
-    setPos(x-sRadius*0.5, y-sRadius*0.5);
+    setPos(x-mR*0.5, y-mR*0.5);
 }
 
-Ball::Ball(QColor color, QPointF p, Vector v, qreal mass)
-: mColor(color), mP(p), mV(v), mM(mass)
+Ball::Ball(QColor color, QPointF p, Vector v, qreal mass, qreal radius)
+: mColor(color), mP(p), mV(v), mM(mass), mR(radius), mA(Vector(0, 0))
 {
-    setPos(p.x()-sRadius*0.5, p.y()-sRadius*0.5);
+    setPos(p.x()-mR*0.5, p.y()-mR*0.5);
 }
 
 void Ball::posUpdate(qreal dist, qreal rad)
@@ -28,6 +29,9 @@ void Ball::vectorReflect(qreal rad)
 
 void Ball::advance(qreal deltaT)
 {
+    // Update the velocity vector with the acceleration vector
+    mV += mA * deltaT;
+
     // Compute new position based on delta-t
     if (mV.getSize() > 50.0) mV.setSize(50.0);
     if (mV.getSize() > 0) {
@@ -54,13 +58,13 @@ void Ball::paint(QPainter *painter, const QStyleOptionGraphicsItem *option, QWid
     painter->setPen(pen);
     painter->setBrush(brush);
 
-    painter->drawEllipse(QRectF(-sRadius, -sRadius, sRadius*2.0, sRadius*2.0));
+    painter->drawEllipse(QRectF(-mR, -mR, mR*2.0, mR*2.0));
 }
 
 QRectF Ball::boundingRect() const
 {
     // Making the bounding rect too big helps with rendering fast moving balls
-    return QRectF(-sRadius*2, -sRadius*2, sRadius*4.0, sRadius*4.0);
+    return QRectF(-mR*2, -mR*2, mR*4.0, mR*4.0);
 }
 
 qreal Ball::distance(Ball* b) const
@@ -74,9 +78,9 @@ qreal Ball::distance(Wall* w) const
 
     // Check if line endpoint inside circle
     qreal startDist = qSqrt(qPow(mP.x()-l.x1(), 2.0) + qPow(mP.y()-l.y1(), 2.0));
-    if (startDist <= sRadius) return startDist;
+    if (startDist <= mR) return startDist;
     qreal endDist = qSqrt(qPow(mP.x()-l.x2(), 2.0) + qPow(mP.y()-l.y2(), 2.0));
-    if (endDist <= sRadius) return endDist;
+    if (endDist <= mR) return endDist;
 
     // Get dot product of the line and circle
     qreal dot = ( ((mP.x()-l.x1())*(l.x2()-l.x1())) + ((mP.y()-l.y1())*(l.y2()-l.y1())) ) / qPow(l.length(),2);
@@ -118,7 +122,7 @@ void Ball::collide(Ball* b)
     b->mV = otherNewVec;
 }
 
-void Ball::addVector(Vector v)
+void Ball::addVelocityVector(Vector v)
 {
     mV += v;
 }
@@ -131,4 +135,14 @@ void Ball::velocityMultiply(qreal scalar)
 void Ball::velocityAddition(qreal scalar)
 {
     mV += scalar;
+}
+
+void Ball::addAccelerationVector(Vector a)
+{
+    mA += a;
+}
+
+void Ball::setAccelerationVector(Vector a)
+{
+    mA = a;
 }

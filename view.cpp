@@ -42,10 +42,12 @@ void GraphicsView::mouseReleaseEvent(QMouseEvent *event)
     if (mLine->getVisibility()) {
         mLine->setVisibility(false);
         qreal mass = mUniformRng(mRng) * (Ball::sMaxMass - Ball::sMinMass) + Ball::sMinMass;
+        qreal radius = mUniformRng(mRng) * (Ball::sMaxRadius - Ball::sMinRadius) + Ball::sMinRadius;
         auto ball = new Ball(QColor(0, 0, 0),
                              mLine->getStartPos(),
                              Vector(mLine->getLine(), mLine->getLine().length()*0.01),
-                             mass);
+                             mass,
+                             radius);
         scene()->addItem(ball);
     }
 }
@@ -53,73 +55,173 @@ void GraphicsView::mouseReleaseEvent(QMouseEvent *event)
 void GraphicsView::timerEvent(QTimerEvent *event)
 {
     mLine->update();
-    collisionCalc();
+    if (mAccuracy) {
+        accuratePhysicsCalc();
+    } else {
+        fastPhysicsCalc();
+    }
 }
 
-void GraphicsView::collisionCalc()
-{
+void GraphicsView::fastPhysicsCalc() {
     qreal dx = mGravityStrength * (mDeltaT / mSubSamples) * qCos(mGravityDirection);
     qreal dy = mGravityStrength * (mDeltaT / mSubSamples) * qSin(mGravityDirection);
-    Vector gravityVector = Vector(dx, dy);
+    Vector gravity = Vector(dx, dy);
 
-    QVector<Ball*> balls_lmao;
-    QVector<Wall*> walls;
-    const QList<QGraphicsItem*> items = scene()->items();
-    for (QGraphicsItem *item : items) {
-        if (Ball *ball = qgraphicsitem_cast<Ball*>(item))
+    QVector<Ball *> balls_lmao;
+    QVector<Wall *> walls;
+    const QList<QGraphicsItem *> items = scene()->items();
+    for (QGraphicsItem *item: items) {
+        if (Ball *ball = qgraphicsitem_cast<Ball *>(item)) {
             balls_lmao << ball;
-        if (Wall *wall = qgraphicsitem_cast<Wall*>(item)) {
+            ball->setAccelerationVector(gravity);
+        }
+        if (Wall *wall = qgraphicsitem_cast<Wall *>(item)) {
             wall->update(); // Update wall colour
             walls << wall;
         }
     }
 
+    qreal subSampleDeltaT = mDeltaT / mSubSamples;
+
     // Sub-sample the current frame
-    for (int s = 0; s <= mSubSamples; s++)
-    {
+    for (int s = 0; s <= mSubSamples; s++) {
+
         // Check for balls going to the wall(s)
         for (auto b: balls_lmao) {
             for (auto w: walls) {
-                qreal dist = Ball::sRadius - b->distance(w);
+                qreal dist = b->getRadius() - b->distance(w);
                 if (dist >= 0) {
                     b->posUpdate(dist + 0.1, w->getNormVec().atan2());
                     b->vectorReflect(w->getNormVec().atan2());
 
                     // Approximate inelastic collision
                     if (mInelastic) b->velocityMultiply(0.9);
-                    b->velocityAddition(mTemp*sMaxTemp);
+                    b->velocityAddition(mTemp * sMaxTemp);
                 }
             }
-        }
 
-        // Then check for collision with other balls
-        int numBalls = balls_lmao.size();
-        for (int i; i < numBalls; i++) {
-            auto bI = balls_lmao[i];
-            for (int j = i + 1; j < numBalls; j++) {
-                auto bJ = balls_lmao[j];
-                qreal dist = Ball::sRadius * 2.0 - bI->distance(bJ);
+            for (auto otherB : balls_lmao) {
+                if (b == otherB) continue;
+
+                qreal dist = b->getRadius() + otherB->getRadius() - b->distance(otherB);
                 if (dist >= 0) {
-                    qreal atan2 = bI->atan2(bJ);
-                    bI->posUpdate(dist * 0.5 + 0.1, atan2);
-                    bJ->posUpdate(dist * 0.5 + 0.1, atan2 + M_PI);
-                    bI->collide(bJ);
+                    qreal atan2 = b->atan2(otherB);
+                    b->posUpdate(dist * 0.5 + 0.1, atan2);
+                    otherB->posUpdate(dist * 0.5 + 0.1, atan2 + M_PI);
+                    b->collide(otherB);
 
                     // Approximate inelastic collision
                     if (mInelastic) {
-                        bI->velocityMultiply(0.9);
-                        bJ->velocityMultiply(0.9);
+                        b->velocityMultiply(0.9);
+                        otherB->velocityMultiply(0.9);
                     }
                 }
             }
-        }
 
-        // Update positions by sub time-step
-        for (auto b: balls_lmao) {
-            b->addVector(gravityVector);
-            b->advance(mDeltaT / mSubSamples);
+            // Update positions by sub time-step
+            b->advance(subSampleDeltaT);
         }
     }
+    // Draw calls and get the current energy total
+    qreal energy = 0;
+    for (auto b: balls_lmao) {
+        b->update();
+        energy += b->getEnergy();
+    }
+    energy /= 1000.0;
+    mEnergyText->setPlainText(QString("%1 kJ").arg(energy, 0, 'f', 5));
+}
+
+void GraphicsView::accuratePhysicsCalc()
+{
+    qreal dx = mGravityStrength * qCos(mGravityDirection);
+    qreal dy = mGravityStrength * qSin(mGravityDirection);
+    Vector gravity = Vector(dx, dy);
+
+    QVector<Ball*> balls_lmao;
+    QVector<Wall*> walls;
+    const QList<QGraphicsItem*> items = scene()->items();
+    for (QGraphicsItem *item : items) {
+        if (Ball *ball = qgraphicsitem_cast<Ball*>(item)) {
+            balls_lmao << ball;
+        }
+        if (Wall *wall = qgraphicsitem_cast<Wall*>(item)) {
+            wall->update(); // Update wall colour
+            walls << wall;
+        }
+    }
+    QList<QPair<Ball*, Wall*>> collidedWalls;
+    QList<QPair<Ball*, Ball*>> collidedBalls;
+
+    qreal subSampleDeltaT = mDeltaT / mSubSamples;
+
+    // Sub-sample the current time-step
+    for (int s = 0; s <= mSubSamples; s++) {
+
+        for (auto b : balls_lmao)
+            b->setTimeRemaining(subSampleDeltaT);
+
+        for (int c = 0; c <= mCollisionTreeLimit; c++) {
+
+            for (auto b: balls_lmao) {
+                b->setAccelerationVector(gravity);
+
+                if (b->getTimeRemaining() > 0.0) {
+                    b->storePosition();
+
+                    // Update positions by sub time-step
+                    b->advance(b->getTimeRemaining());
+                }
+            }
+
+            for (auto b: balls_lmao) {
+
+                // Check for balls going to the wall(s)
+                for (auto w: walls) {
+                    qreal dist = b->getRadius() - b->distance(w);
+                    if (dist >= 0) {
+                        b->posUpdate(dist + 0.1, w->getNormVec().atan2());
+                        collidedWalls.push_back(QPair<Ball *, Wall *>(b, w));
+                    }
+                }
+
+                // Then check for collision with other balls
+                for (auto otherB: balls_lmao) {
+                    if (b == otherB) continue;
+                    qreal dist = b->getRadius() + otherB->getRadius() - b->distance(otherB);
+                    if (dist >= 0) {
+                        qreal atan2 = b->atan2(otherB);
+                        b->posUpdate(dist * 0.5 + 0.1, atan2);
+                        otherB->posUpdate(dist * 0.5 + 0.1, atan2 + M_PI);
+                        collidedBalls.push_back(QPair<Ball *, Ball *>(b, otherB));
+                    }
+                }
+
+                qreal actualDeltaT = b->getDeltaPos() / b->getVelocity();
+                b->decrementTime(actualDeltaT);
+            }
+
+            for (auto p: collidedWalls) {
+                p.first->vectorReflect(p.second->getNormVec().atan2());
+
+                // Approximate inelastic collision
+                if (mInelastic) p.first->velocityMultiply(0.9);
+                p.first->velocityAddition(mTemp * sMaxTemp);
+            }
+            collidedWalls.clear();
+            for (auto p: collidedBalls) {
+                p.first->collide(p.second);
+
+                // Approximate inelastic collision
+                if (mInelastic) {
+                    p.first->velocityMultiply(0.9);
+                    p.second->velocityMultiply(0.9);
+                }
+            }
+            collidedBalls.clear();
+        }
+    }
+
     // Draw calls and get the current energy total
     qreal energy = 0;
     for (auto b: balls_lmao) {
@@ -163,8 +265,14 @@ View::View(QWidget* parent) : QFrame(parent)
     mCollisionModeButton->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Preferred);
     mCollisionModeButton->setCheckable(true);
 
+    mAccuracyButton = new QToolButton();
+    mAccuracyButton->setText("Accurate physics");
+    mAccuracyButton->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Preferred);
+    mAccuracyButton->setCheckable(true);
+
     QToolBar* toolbar = new QToolBar;
     toolbar->addWidget(mCollisionModeButton);
+    toolbar->addWidget(mAccuracyButton);
     toolbar->addWidget(mDeleteAllButton);
 
     QWidget* spacer = new QWidget();
@@ -201,6 +309,8 @@ View::View(QWidget* parent) : QFrame(parent)
             mGraphicsView, &GraphicsView::adjustTemperature);
     connect(mCollisionModeButton, &QToolButton::toggled,
             mGraphicsView, &GraphicsView::toggleInelastic);
+    connect(mAccuracyButton, &QToolButton::toggled,
+            mGraphicsView, &GraphicsView::toggleAccuracy);
 }
 
 void View::setGravityDirection()
@@ -249,6 +359,12 @@ void GraphicsView::toggleInelastic()
 {
     mInelastic = !mInelastic;
 }
+
+void GraphicsView::toggleAccuracy()
+{
+    mAccuracy = !mAccuracy;
+}
+
 
 QGraphicsView* View::getQGraphicsView() const
 {
