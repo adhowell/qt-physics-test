@@ -31,6 +31,17 @@ void GraphicsView::mousePressEvent(QMouseEvent* event)
 }
 
 void GraphicsView::mouseMoveEvent(QMouseEvent *event) {
+
+    if (event->modifiers() == Qt::KeyboardModifier::ShiftModifier)
+    {
+        auto ball = new Ball(QColor(0, 0, 0),
+                             mapToScene(event->x(), event->y()),
+                             Vector(0, 0),
+                             0.1,
+                             2);
+        scene()->addItem(ball);
+    }
+
     if (mLine->getVisibility()) {
         QPointF eventPos = mapToScene(event->x(), event->y());
         mLine->updateEnd(eventPos);
@@ -60,6 +71,7 @@ void GraphicsView::timerEvent(QTimerEvent *event)
     } else {
         fastPhysicsCalc();
     }
+    deleteOutOfBounds();
 }
 
 void GraphicsView::fastPhysicsCalc() {
@@ -316,6 +328,23 @@ View::View(QWidget* parent) : QFrame(parent)
 void View::setGravityDirection()
 {
     mGraphicsView->adjustGravityDirection(mGravityDial->value());
+}
+
+void GraphicsView::deleteOutOfBounds()
+{
+    QVector<Ball*> balls;
+    const QList<QGraphicsItem*> items = scene()->items();
+    for (QGraphicsItem *item : items) {
+        if (Ball *ball = qgraphicsitem_cast<Ball*>(item)) {
+            QPointF pos = ball->getPos();
+            if (pos.x() < 0 || pos.x() > gWidth - gBuffer || pos.y() < 0 || pos.y() > gHeight - gBuffer)
+                balls << ball;
+        }
+    }
+    for (auto b : balls) {
+        scene()->removeItem(b);
+        delete b;
+    }
 }
 
 void GraphicsView::clearItems()

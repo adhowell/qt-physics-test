@@ -51,7 +51,8 @@ void Ball::paint(QPainter *painter, const QStyleOptionGraphicsItem *option, QWid
     pen.setColor(mColor);
     QColor brushColor;
     brushColor.setRgb(mColor.rgb());
-    brushColor.setAlphaF((mM - sMinMass) / (sMaxMass - sMinMass));
+    if (mM >= sMinMass)
+        brushColor.setAlphaF((mM - sMinMass) / (sMaxMass - sMinMass));
     brush.setColor(brushColor);
 
     painter->setRenderHint(QPainter::Antialiasing);

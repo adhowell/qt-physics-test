@@ -21,6 +21,7 @@ public:
     void fastPhysicsCalc();
     void accuratePhysicsCalc();
     void addEnergyLabel();
+    void deleteOutOfBounds();
     Line* getLine() { return mLine; }
     qreal* getTemp() { return &mTemp; }
 

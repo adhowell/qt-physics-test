@@ -114,6 +114,7 @@ public:
     qreal getEnergy() const { return 0.5*mM*qPow(mV.getSize(), 2.0); }
     qreal getTimeRemaining() { return mTimeRemaining; }
     qreal getVelocity() { return mV.getSize(); }
+    QPointF getPos() { return mP; }
 
     static qreal sMinMass;
     static qreal sMaxMass;
