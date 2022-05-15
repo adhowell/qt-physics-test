@@ -155,6 +155,7 @@ void GraphicsView::accuratePhysicsCalc()
     const QList<QGraphicsItem*> items = scene()->items();
     for (QGraphicsItem *item : items) {
         if (Ball *ball = qgraphicsitem_cast<Ball*>(item)) {
+            ball->setAccelerationVector(gravity);
             balls_lmao << ball;
         }
         if (Wall *wall = qgraphicsitem_cast<Wall*>(item)) {
@@ -162,8 +163,6 @@ void GraphicsView::accuratePhysicsCalc()
             walls << wall;
         }
     }
-    QList<QPair<Ball*, Wall*>> collidedWalls;
-    QList<QPair<Ball*, Ball*>> collidedBalls;
 
     qreal subSampleDeltaT = mDeltaT / mSubSamples;
 
@@ -176,7 +175,6 @@ void GraphicsView::accuratePhysicsCalc()
         for (int c = 0; c <= mCollisionTreeLimit; c++) {
 
             for (auto b: balls_lmao) {
-                b->setAccelerationVector(gravity);
 
                 if (b->getTimeRemaining() > 0.0) {
                     b->storePosition();
@@ -188,12 +186,18 @@ void GraphicsView::accuratePhysicsCalc()
 
             for (auto b: balls_lmao) {
 
+                if (b->getTimeRemaining() <= 0.0) continue;
+
                 // Check for balls going to the wall(s)
                 for (auto w: walls) {
                     qreal dist = b->getRadius() - b->distance(w);
                     if (dist >= 0) {
                         b->posUpdate(dist + 0.1, w->getNormVec().atan2());
-                        collidedWalls.push_back(QPair<Ball *, Wall *>(b, w));
+                        b->vectorReflect(w->getNormVec().atan2());
+
+                        // Approximate inelastic collision
+                        if (mInelastic) b->velocityMultiply(0.9);
+                        b->velocityAddition(mTemp * sMaxTemp);
                     }
                 }
 
@@ -205,32 +209,19 @@ void GraphicsView::accuratePhysicsCalc()
                         qreal atan2 = b->atan2(otherB);
                         b->posUpdate(dist * 0.5 + 0.1, atan2);
                         otherB->posUpdate(dist * 0.5 + 0.1, atan2 + M_PI);
-                        collidedBalls.push_back(QPair<Ball *, Ball *>(b, otherB));
+                        b->collide(otherB);
+
+                        // Approximate inelastic collision
+                        if (mInelastic) {
+                            b->velocityMultiply(0.9);
+                            otherB->velocityMultiply(0.9);
+                        }
                     }
                 }
 
                 qreal actualDeltaT = b->getDeltaPos() / b->getVelocity();
                 b->decrementTime(actualDeltaT);
             }
-
-            for (auto p: collidedWalls) {
-                p.first->vectorReflect(p.second->getNormVec().atan2());
-
-                // Approximate inelastic collision
-                if (mInelastic) p.first->velocityMultiply(0.9);
-                p.first->velocityAddition(mTemp * sMaxTemp);
-            }
-            collidedWalls.clear();
-            for (auto p: collidedBalls) {
-                p.first->collide(p.second);
-
-                // Approximate inelastic collision
-                if (mInelastic) {
-                    p.first->velocityMultiply(0.9);
-                    p.second->velocityMultiply(0.9);
-                }
-            }
-            collidedBalls.clear();
         }
     }
 
